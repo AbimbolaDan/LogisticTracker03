@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styling.css">
+    <title>GSIL | Admin Dashboard</title>
+</head>
+<body class="admin-body">
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="logo"><span class="GS">GSIL</span> Admin</div>
+            <nav>
+                <ul>
+                    <li class="active">Manage Shipments</li>
+                    <li><a href="index.html" style="color:white; text-decoration:none;">View Tracking Page</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-header">
+                <h1> <span class="GS">GSIL </span> Shipment Management</h1>
+                <button id="add-new-btn" class="primary-btn">+ Create New Shipment</button>
+            </header>
+
+            <section id="shipment-form-container" class="admin-card hidden">
+                <h3 id="form-title">Create Tracking Item</h3>
+                <form id="admin-shipment-form">
+                    <div class="form-group">
+                        <label>Shipment ID (Auto-generated if empty)</label>
+                        <input type="text" id="admin-track-id" placeholder="e.g. GS882930">
+                    </div>
+                    
+                    <div class="form-row" style="display: flex; gap: 20px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Current Location</label>
+                            <input type="text" id="admin-location" placeholder="e.g. Guangzhou, China">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="destination">Destination</label>
+                            <input type="text" placeholder="e.g Lagos,Nigeria" id="destination">
+                        </div> 
+                        <div class="form-group" style="flex: 1;">
+                            <label for="Departure">Departure Origin</label>
+                            <input type="text" placeholder="e.g Guangzhou, China" id="departure">
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="display:flex; gap:20px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Current Status</label>
+                            <select id="admin-status">
+                                <option value="Shipment Created">Shipment Created</option>
+                                <option value="Departure Origin">Departure Origin</option>
+                                <option value="In Transit">In Transit</option>
+                                <option value="Out for Delivery">Out for Delivery</option>
+                                <option value="Delivered">Delivered</option>
+                            </select>
+                        </div>
+                         
+                        <div class="form-group" style="flex: 1;" >
+                            <label for="Date">Date</label>
+                            <input type="date" placeholder="e.g 10th April, 2025" id="date">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                        <label for="TIme">Time</label>
+                        <input type="time" placeholder="10:00AM" id="time">
+                    </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Remarks</label>
+                        <textarea id="admin-remarks" rows="3" placeholder="Enter custom tracking status notes..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="save-btn">Save Shipment</button>
+                        <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="admin-card">
+                <h3>Tracked Items List</h3>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Tracking ID</th>
+                            <th>Current Status</th>
+                            <th>Location</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipment-list-body">
+                        </tbody>
+                </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="js/admin.js"></script>
+
+</body>
+</html>
