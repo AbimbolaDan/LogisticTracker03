@@ -23,11 +23,33 @@ cancelBtn.addEventListener('click', () => {
     formContainer.classList.add('hidden');
 });
 
+// --- SIDEBAR TOGGLE LOGIC ---
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarClose = document.getElementById('sidebar-close');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+function openSidebar() {
+    sidebar.classList.add('active');
+    sidebarOverlay.style.display = 'block';
+    if(sidebarToggle) sidebarToggle.style.display = 'none'; // Hide hamburger when open
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('active');
+    sidebarOverlay.style.display = 'none';
+    if(sidebarToggle) sidebarToggle.style.display = 'block'; // Show hamburger when closed
+}
+
+// Event Listeners
+if(sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
+if(sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
 shipmentForm.addEventListener('submit', (e) => {
     e.preventDefault();
-
-    const trackID = document.getElementById('admin-track-id').value || 'GS' + Math.floor(100000 + Math.random() * 900000);
+    const trackIDInput = document.getElementById('admin-track-id');
+    const trackID = trackIDInput.value || 'GS' + Math.floor(100000 + Math.random() * 900000);
     const currentStatus = document.getElementById('admin-status').value;
     const currentLocation = document.getElementById('admin-location').value;
     const currentRemarks = document.getElementById('admin-remarks').value;
