@@ -35,7 +35,7 @@ form.addEventListener('submit', function(e) {
 
     if (email === adminEmail && password === adminPass) {
         localStorage.setItem('isLoggedIn', 'true');
-        window.location.href = 'index.html';
+        window.location.href = 'Admin.html';
     } else {
         alert('Invalid Email or Password. Please check your credentials and try again.');
         passwordInput.value = "";
