@@ -31,7 +31,7 @@ loginForm.addEventListener('submit', function(e) {
         localStorage.setItem('isLoggedIn', 'true');
         
        
-        window.location.href = 'admin.html';
+        window.location.href = 'index.html';
     } else {
      
         alert('Invalid Email or Password. Please check your credentials and try again.');
