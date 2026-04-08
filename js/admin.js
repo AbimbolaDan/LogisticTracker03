@@ -4,14 +4,36 @@ const formContainer = document.getElementById('shipment-form-container');
 const addNewBtn = document.getElementById('add-new-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 
-
+// --- PROTECTION ---
 if (localStorage.getItem('isLoggedIn') !== 'true') {
     window.location.href = 'login.html';
 }
 
 let shipments = JSON.parse(localStorage.getItem('gsil_shipments')) || [];
 
+// --- SIDEBAR TOGGLE LOGIC ---
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarClose = document.getElementById('sidebar-close');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
 
+function openSidebar() {
+    sidebar.classList.add('active');
+    sidebarOverlay.style.display = 'block';
+    if(sidebarToggle) sidebarToggle.style.display = 'none'; 
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('active');
+    sidebarOverlay.style.display = 'none';
+    if(sidebarToggle) sidebarToggle.style.display = 'block'; 
+}
+
+if(sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
+if(sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+// --- FORM VISIBILITY ---
 addNewBtn.addEventListener('click', () => {
     formContainer.classList.remove('hidden');
     shipmentForm.reset();
@@ -23,33 +45,13 @@ cancelBtn.addEventListener('click', () => {
     formContainer.classList.add('hidden');
 });
 
-// --- SIDEBAR TOGGLE LOGIC ---
-const sidebar = document.getElementById('sidebar');
-const sidebarToggle = document.getElementById('sidebar-toggle');
-const sidebarClose = document.getElementById('sidebar-close');
-const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-function openSidebar() {
-    sidebar.classList.add('active');
-    sidebarOverlay.style.display = 'block';
-    if(sidebarToggle) sidebarToggle.style.display = 'none'; // Hide hamburger when open
-}
-
-function closeSidebar() {
-    sidebar.classList.remove('active');
-    sidebarOverlay.style.display = 'none';
-    if(sidebarToggle) sidebarToggle.style.display = 'block'; // Show hamburger when closed
-}
-
-// Event Listeners
-if(sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
-if(sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
-if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
-
+// --- MAIN SUBMISSION LOGIC ---
 shipmentForm.addEventListener('submit', (e) => {
     e.preventDefault();
+
     const trackIDInput = document.getElementById('admin-track-id');
     const trackID = trackIDInput.value || 'GS' + Math.floor(100000 + Math.random() * 900000);
+    
     const currentStatus = document.getElementById('admin-status').value;
     const currentLocation = document.getElementById('admin-location').value;
     const currentRemarks = document.getElementById('admin-remarks').value;
@@ -58,17 +60,17 @@ shipmentForm.addEventListener('submit', (e) => {
     const destination = document.getElementById('destination').value;
     const departure = document.getElementById('departure').value;
 
-   
     const index = shipments.findIndex(s => s.id === trackID);
 
     if (index > -1) {
+        // --- UPDATE MODE ---
         shipments[index].status = currentStatus;
         shipments[index].location = currentLocation;
         shipments[index].remarks = currentRemarks;
         shipments[index].date = currentDate;
         shipments[index].updatedAt = new Date().toLocaleString();
 
-        
+        // Standard push to end of array for updates
         shipments[index].history.push({
             status: currentStatus,
             location: currentLocation,
@@ -78,6 +80,31 @@ shipmentForm.addEventListener('submit', (e) => {
             done: true
         });
     } else {
+        // --- CREATE MODE ---
+        // 1. We manually create the 'Shipment Created' event first.
+        const firstPoint = {
+            status: 'Shipment Created',
+            location: departure || 'Origin Facility',
+            remarks: 'Shipment registered in GSIL system',
+            date: currentDate,
+            time: currentTime,
+            done: true
+        };
+
+        const newHistory = [firstPoint];
+
+        // 2. We only add the SECOND point if the user didn't select 'Shipment Created' in the dropdown
+        if (currentStatus !== 'Shipment Created') {
+            newHistory.push({
+                status: currentStatus,
+                location: currentLocation,
+                remarks: currentRemarks,
+                date: currentDate,
+                time: currentTime,
+                done: true
+            });
+        }
+
         const newShipment = {
             id: trackID,
             status: currentStatus,
@@ -87,37 +114,16 @@ shipmentForm.addEventListener('submit', (e) => {
             destination: destination,
             departure: departure,
             updatedAt: new Date().toLocaleString(),
-            history: [
-                {
-                    status: 'Departure Origin',
-                    location: departure || 'Origin Facility',
-                    remarks: 'Shipment handed over to carrier',
-                    date: currentDate,
-                    time: '09:00 AM',
-                    done: true
-                },
-                {
-                    status: currentStatus,
-                    location: currentLocation,
-                    remarks: currentRemarks,
-                    date: currentDate,
-                    time: currentTime,
-                    done: true
-                }
-            ]
+            history: newHistory 
         };
         shipments.push(newShipment);
     }
 
-
     localStorage.setItem('gsil_shipments', JSON.stringify(shipments));
-    
-
     renderShipments();
     formContainer.classList.add('hidden');
     alert('Shipment Successfully Saved!');
 });
-
 
 function renderShipments() {
     shipmentListBody.innerHTML = shipments.map(s => `
@@ -133,13 +139,12 @@ function renderShipments() {
     `).join('');
 }
 
-
 window.editShipment = (id) => {
     const s = shipments.find(item => item.id === id);
     if (!s) return;
 
     document.getElementById('admin-track-id').value = s.id;
-    document.getElementById('admin-track-id').disabled = true; // Don't allow ID change during edit
+    document.getElementById('admin-track-id').disabled = true; 
     document.getElementById('admin-status').value = s.status;
     document.getElementById('admin-location').value = s.location;
     document.getElementById('admin-remarks').value = s.remarks;
@@ -152,12 +157,16 @@ window.editShipment = (id) => {
 };
 
 window.deleteShipment = (id) => {
-    if (confirm('Are you sure you want to delete this shipment? This cannot be undone.')) {
+    if (confirm('Are you sure you want to delete this shipment?')) {
         shipments = shipments.filter(s => s.id !== id);
         localStorage.setItem('gsil_shipments', JSON.stringify(shipments));
         renderShipments();
     }
 };
 
+window.logout = function() {
+    localStorage.removeItem('isLoggedIn');
+    window.location.href = 'login.html';
+};
 
 renderShipments();
