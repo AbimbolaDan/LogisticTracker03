@@ -22,7 +22,7 @@
             <nav>
                 <ul>
                     <li class="active">Manage Shipments</li>
-                    <li><a href="index.html" style="color:white; text-decoration:none;">View Tracking Page</a></li>
+                    <li><a href="user.html" style="color:white; text-decoration:none;">View Tracking Page</a></li>
                 </ul>
             </nav>
         </aside>
@@ -36,9 +36,15 @@
             <section id="shipment-form-container" class="admin-card hidden">
                 <h3 id="form-title">Create Tracking Item</h3>
                 <form id="admin-shipment-form">
-                    <div class="form-group">
+                    <div class="form-row" style="display: flex; gap: 20px;">
+                        <div class="form-group" style="flex: 1;">
                         <label>Shipment ID (Auto-generated if empty)</label>
                         <input type="text" id="admin-track-id" placeholder="e.g. GS882930">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="estimated-delivery">Estimated Delivery Date</label>
+                        <input type="date" id="admin-estimated-date">
+                    </div>
                     </div>
                     
                     <div class="form-row" style="display: flex; gap: 20px;">

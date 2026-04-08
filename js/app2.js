@@ -30,6 +30,10 @@ track_form.addEventListener('submit', (e) => {
         return;
     }
 
+    const estDateObj = new Date(foundShipment.estimatedDate);
+    const today = new Date();
+    const isDelayed = today > estDateObj && foundShipment.status !== 'Delivered';
+
     // --- TIMELINE LOGIC ---
     // We show history in original order (Oldest first) as requested
     const details = [...foundShipment.history];
@@ -100,6 +104,10 @@ track_form.addEventListener('submit', (e) => {
                     </div>
                 </div>
                 
+            </div>
+            <div class="est-delivery-box">
+                <p class = "Expect-Date"style="margin: 0; color: var(--text-dark);">
+                Estimated Delivery: <strong>${foundShipment.estimatedDate || 'TBD'}</strong></p>${isDelayed ? '<p class="delay-alert" style="color: var(--primary-red); font-weight: bold; margin-top: 5px;">⚠️ Shipment Delayed</p>' : ''}
             </div>
             <div class="link-back">
                     <a href="#" class="back">Go Home</a>

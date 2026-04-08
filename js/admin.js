@@ -59,6 +59,7 @@ shipmentForm.addEventListener('submit', (e) => {
     const currentTime = document.getElementById('time').value;
     const destination = document.getElementById('destination').value;
     const departure = document.getElementById('departure').value;
+    const estimatedDate = document.getElementById('admin-estimated-date').value;
 
     const index = shipments.findIndex(s => s.id === trackID);
 
@@ -68,7 +69,9 @@ shipmentForm.addEventListener('submit', (e) => {
         shipments[index].location = currentLocation;
         shipments[index].remarks = currentRemarks;
         shipments[index].date = currentDate;
+        shipments[index].estimatedDate = estimatedDate;
         shipments[index].updatedAt = new Date().toLocaleString();
+        
 
         // Standard push to end of array for updates
         shipments[index].history.push({
@@ -114,7 +117,8 @@ shipmentForm.addEventListener('submit', (e) => {
             destination: destination,
             departure: departure,
             updatedAt: new Date().toLocaleString(),
-            history: newHistory 
+            history: newHistory ,
+            estimatedDate: estimatedDate
         };
         shipments.push(newShipment);
     }
@@ -143,6 +147,7 @@ window.editShipment = (id) => {
     const s = shipments.find(item => item.id === id);
     if (!s) return;
 
+    document.getElementById('admin-estimated-date').value = s.estimatedDate || "";
     document.getElementById('admin-track-id').value = s.id;
     document.getElementById('admin-track-id').disabled = true; 
     document.getElementById('admin-status').value = s.status;
@@ -151,6 +156,7 @@ window.editShipment = (id) => {
     document.getElementById('date').value = s.date || "";
     document.getElementById('destination').value = s.destination || "";
     document.getElementById('departure').value = s.departure || "";
+    
 
     formContainer.classList.remove('hidden');
     document.getElementById('form-title').innerText = "Update Status for " + id;
