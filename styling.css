@@ -114,18 +114,16 @@
 }
 .reveal {
     display: block;
-    width: 60vw;
+    width: 67vw;
     max-width: 1200px;
     margin-top: 30px;
-    background-color: white; 
-    /* border: 1px solid var(--border); */
+    background-color: white;
     border-radius: 12px;
-    padding: 25px;
-    /* box-shadow: 0 4px 15px rgba(0,0,0,0.05); */
+    padding: 15px;
 }
 
 .trackingcard {
-    background-color: white
+    background-color: white;
 }
 
 .timeline-container {
@@ -261,8 +259,9 @@
     border-radius: 8px;
     border: 1px solid #ffe58f;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    /* justify-content: center; */
+    /* align-items: center;
+ */
 }
 .Expect-Date {
     color: var(--text-dark);
@@ -697,17 +696,43 @@
     .result-box{
         display: flex;
         flex-direction: column;
+        align-items: flex-start; 
+        gap: 2rem; 
+        width: 100%;
+        padding: 0;
+    }
+    .trackingPage{
+        padding: 10px;
+        align-items: flex-start;
+        margin: 0;
+    }
+    .trackingcard {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; 
+        padding: 10px;
+        text-align: left;
+    }
+    .status_container {
+        width: 100%; 
+        max-width: 400px; 
+        margin-left: 0;
+    }
+    .result-box{
         gap: 3em;
     }
     .reveal{
         box-shadow: none;
         border: none;
+        max-width: 900px;
     }
     .status_container{
         width: 100%;
     }
     .timeline-container{
         padding-left: 0;
+        width: 100%;
+        text-align: left;
     }
     #track-form{
         width: 100%;
@@ -729,7 +754,13 @@
         align-items: flex-start;
         gap: 15px;
     }
-
+    .form{
+        border-radius: none;
+    }
+    .est-delivery-box{
+        padding: 10px 25px;
+        width: auto;
+    }
     .sidebar-toggle {
         display: block;
         position: fixed;
@@ -822,5 +853,9 @@
     #map-hero {
         height: 350px;
         width: 100%;
+        padding: 10px;
+    }
+    .trackingPage{
+        padding: 10px;
     }
 }
