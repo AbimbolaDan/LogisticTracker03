@@ -12,24 +12,25 @@
     </button>
 
     <div class="admin-container">
-    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-    <aside id="sidebar" class="sidebar">
-        <div class="logo-section">
-            <div class="logo"><span>GSIL</span> Admin</div>
-            <button id="sidebar-close" class="sidebar-close-btn">&times;</button>
-        </div>
+        <aside id="sidebar" class="sidebar">
+            <div class="logo-section">
+                <div class="logo"><span>GSIL</span> Admin</div>
+                <button id="sidebar-close" class="sidebar-close-btn">&times;</button>
+            </div>
             <nav>
                 <ul>
                     <li class="active">Manage Shipments</li>
                     <li><a href="user.html" style="color:white; text-decoration:none;">View Tracking Page</a></li>
+                    <li onclick="logout()" style="margin-top: 20px; color: #ff4d4d; cursor: pointer;">Logout</li>
                 </ul>
             </nav>
         </aside>
 
         <main class="admin-main">
             <header class="admin-header">
-                <h1> <span class="GSI">GSIL </span> Shipment Management</h1>
+                <h1><span class="GSI">GSIL </span> Shipment Management</h1>
                 <button id="add-new-btn" class="primary-btn">+ Create New Shipment</button>
             </header>
 
@@ -38,28 +39,27 @@
                 <form id="admin-shipment-form">
                     <div class="form-row" style="display: flex; gap: 20px;">
                         <div class="form-group" style="flex: 1;">
-                        <label>Shipment ID (Auto-generated if empty)</label>
-                        <input type="text" id="admin-track-id" placeholder="e.g. GS882930">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="estimated-delivery">Estimated Delivery Date</label>
-                        <input type="date" id="admin-estimated-date">
-                    </div>
+                            <label>Shipment ID (Leave blank to autogenerate)</label>
+                            <input type="text" id="admin-track-id" placeholder="e.g. GS882930 (Optional)">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Estimated Delivery Date</label>
+                            <input type="date" id="admin-estimated-date">
+                        </div>
                     </div>
                     
                     <div class="form-row" style="display: flex; gap: 20px;">
                         <div class="form-group" style="flex:1;">
                             <label>Current Location</label>
-                            <input type="text" id="admin-location" placeholder="e.g. Guangzhou, China">
+                            <input type="text" id="admin-location" placeholder="e.g. Guangzhou, China" >
                         </div>
                         <div class="form-group" style="flex: 1;">
-                            <label for="destination">Destination</label>
-                            <input type="text" placeholder="e.g Lagos,Nigeria" id="destination">
-                            
+                            <label>Destination</label>
+                            <input type="text" id="destination" placeholder="e.g. Lagos, Nigeria" required>
                         </div> 
                         <div class="form-group" style="flex: 1;">
-                            <label for="Departure">Departure Origin</label>
-                            <input type="text" placeholder="e.g Guangzhou, China" id="departure">
+                            <label>Departure Origin</label>
+                            <input type="text" id="departure" placeholder="e.g. Guangzhou, China" required>
                         </div>
                     </div>
 
@@ -74,49 +74,46 @@
                                 <option value="Delivered">Delivered</option>
                             </select>
                         </div>
-                         
                         <div class="form-group" style="flex: 1;" >
-                            <label for="Date">Date</label>
-                            <input type="date" placeholder="e.g 10th April, 2025" id="date">
+                            <label>Date</label>
+                            <input type="date" id="date" required>
                         </div>
                         <div class="form-group" style="flex: 1;">
-                        <label for="TIme">Time</label>
-                        <input type="time" placeholder="10:00AM" id="time">
-                    </div>
+                            <label>Time</label>
+                            <input type="time" id="time" required>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label>Remarks</label>
-                        <textarea id="admin-remarks" rows="3" placeholder="Enter custom tracking status notes..."></textarea>
+                        <textarea id="admin-remarks" rows="3" placeholder="Enter custom notes..."></textarea>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="save-btn">Save Shipment</button>
+                        <button type="submit" class="save-btn" id="save-btn">Save Shipment</button>
                         <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
                     </div>
                 </form>
             </section>
 
             <section class="admin-card">
-                <h3>Tracked Items List</h3>
+                <h3>Tracked Items List (Live Cloud)</h3>
                 <div class="table-responsive">
                     <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Tracking ID</th>
-                            <th>Current Status</th>
-                            <th>Location</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="shipment-list-body">
-                        </tbody>
-                </table>
+                        <thead>
+                            <tr>
+                                <th>Tracking ID</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shipment-list-body"></tbody>
+                    </table>
                 </div>
             </section>
         </main>
     </div>
     <script src="js/admin.js"></script>
-
 </body>
 </html>

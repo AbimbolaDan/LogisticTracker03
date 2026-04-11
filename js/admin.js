@@ -1,17 +1,41 @@
+// --- API CONFIGURATION ---
+const API_BASE_URL = "https://logistics-tracker-sxg2.onrender.com/api";
+
 const shipmentForm = document.getElementById('admin-shipment-form');
 const shipmentListBody = document.getElementById('shipment-list-body');
 const formContainer = document.getElementById('shipment-form-container');
 const addNewBtn = document.getElementById('add-new-btn');
 const cancelBtn = document.getElementById('cancel-btn');
+const saveBtn = document.getElementById('save-btn');
 
-// --- PROTECTION ---
-if (localStorage.getItem('isLoggedIn') !== 'true') {
-    window.location.href = 'login.html';
+// --- AUTH & SECURITY ---
+const token = localStorage.getItem('adminToken');
+if (localStorage.getItem('isLoggedIn') !== 'true' || !token) {
+    window.location.href = 'index.html';
 }
 
-let shipments = JSON.parse(localStorage.getItem('gsil_shipments')) || [];
+const getAuthHeader = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+});
 
-// --- SIDEBAR TOGGLE LOGIC ---
+let isEditMode = false;
+
+// --- HELPER: AUTO-GENERATE ID ---
+// Generates a random ID starting with GS- followed by 5 alphanumeric characters
+function generateShipmentID() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
+    let result = 'GS-';
+    for (let i = 0; i < 5; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// --- INITIAL DATA LOAD ---
+document.addEventListener('DOMContentLoaded', renderShipments);
+
+// --- SIDEBAR LOGIC ---
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
 const sidebarClose = document.getElementById('sidebar-close');
@@ -33,146 +57,145 @@ if(sidebarToggle) sidebarToggle.addEventListener('click', openSidebar);
 if(sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
 if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
-// --- FORM VISIBILITY ---
+
+// --- FORM HANDLING ---
 addNewBtn.addEventListener('click', () => {
+    isEditMode = false;
     formContainer.classList.remove('hidden');
     shipmentForm.reset();
-    document.getElementById('form-title').innerText = "Create Tracking Item";
     document.getElementById('admin-track-id').disabled = false;
+    document.getElementById('form-title').innerText = "Create New Shipment";
 });
 
-cancelBtn.addEventListener('click', () => {
-    formContainer.classList.add('hidden');
-});
+cancelBtn.addEventListener('click', () => formContainer.classList.add('hidden'));
 
-// --- MAIN SUBMISSION LOGIC ---
-shipmentForm.addEventListener('submit', (e) => {
-    e.preventDefault();
 
-    const trackIDInput = document.getElementById('admin-track-id');
-    const trackID = trackIDInput.value || 'GS' + Math.floor(100000 + Math.random() * 900000);
-    
-    const currentStatus = document.getElementById('admin-status').value;
-    const currentLocation = document.getElementById('admin-location').value;
-    const currentRemarks = document.getElementById('admin-remarks').value;
-    const currentDate = document.getElementById('date').value;
-    const currentTime = document.getElementById('time').value;
-    const destination = document.getElementById('destination').value;
-    const departure = document.getElementById('departure').value;
-    const estimatedDate = document.getElementById('admin-estimated-date').value;
+// --- CRUD: READ (GET ALL) ---
+async function renderShipments() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/shipments`, { headers: getAuthHeader() });
+        const shipments = await response.json();
 
-    const index = shipments.findIndex(s => s.id === trackID);
-
-    if (index > -1) {
-        // --- UPDATE MODE ---
-        shipments[index].status = currentStatus;
-        shipments[index].location = currentLocation;
-        shipments[index].remarks = currentRemarks;
-        shipments[index].date = currentDate;
-        shipments[index].estimatedDate = estimatedDate;
-        shipments[index].updatedAt = new Date().toLocaleString();
-        
-
-        // Standard push to end of array for updates
-        shipments[index].history.push({
-            status: currentStatus,
-            location: currentLocation,
-            remarks: currentRemarks,
-            date: currentDate,
-            time: currentTime,
-            done: true
-        });
-    } else {
-        // --- CREATE MODE ---
-        // 1. We manually create the 'Shipment Created' event first.
-        const firstPoint = {
-            status: 'Shipment Created',
-            location: departure || 'Origin Facility',
-            remarks: 'Shipment registered in GSIL system',
-            date: currentDate,
-            time: currentTime,
-            done: true
-        };
-
-        const newHistory = [firstPoint];
-
-        // 2. We only add the SECOND point if the user didn't select 'Shipment Created' in the dropdown
-        if (currentStatus !== 'Shipment Created') {
-            newHistory.push({
-                status: currentStatus,
-                location: currentLocation,
-                remarks: currentRemarks,
-                date: currentDate,
-                time: currentTime,
-                done: true
-            });
-        }
-
-        const newShipment = {
-            id: trackID,
-            status: currentStatus,
-            location: currentLocation,
-            remarks: currentRemarks,
-            date: currentDate,
-            destination: destination,
-            departure: departure,
-            updatedAt: new Date().toLocaleString(),
-            history: newHistory ,
-            estimatedDate: estimatedDate
-        };
-        shipments.push(newShipment);
+        shipmentListBody.innerHTML = shipments.map(s => `
+            <tr>
+                <td><strong>${s.id}</strong></td>
+                <td>${s.status}</td>
+                <td>${s.location}</td>
+                <td>
+                    <button class="edit-btn" onclick="editShipment('${s.id}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteShipment('${s.id}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("Cloud Fetch Error:", err);
     }
-
-    localStorage.setItem('gsil_shipments', JSON.stringify(shipments));
-    renderShipments();
-    formContainer.classList.add('hidden');
-    alert('Shipment Successfully Saved!');
-});
-
-function renderShipments() {
-    shipmentListBody.innerHTML = shipments.map(s => `
-        <tr>
-            <td><strong>${s.id}</strong></td>
-            <td>${s.status}</td>
-            <td>${s.location}</td>
-            <td>
-                <button class="edit-btn" onclick="editShipment('${s.id}')">Edit</button>
-                <button class="delete-btn" onclick="deleteShipment('${s.id}')">Delete</button>
-            </td>
-        </tr>
-    `).join('');
 }
 
-window.editShipment = (id) => {
-    const s = shipments.find(item => item.id === id);
-    if (!s) return;
 
-    document.getElementById('admin-estimated-date').value = s.estimatedDate || "";
-    document.getElementById('admin-track-id').value = s.id;
-    document.getElementById('admin-track-id').disabled = true; 
-    document.getElementById('admin-status').value = s.status;
-    document.getElementById('admin-location').value = s.location;
-    document.getElementById('admin-remarks').value = s.remarks;
-    document.getElementById('date').value = s.date || "";
-    document.getElementById('destination').value = s.destination || "";
-    document.getElementById('departure').value = s.departure || "";
-    
+// --- CRUD: CREATE & UPDATE (POST / PUT) ---
+shipmentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    saveBtn.innerText = "Syncing...";
+    saveBtn.disabled = true;
 
-    formContainer.classList.remove('hidden');
-    document.getElementById('form-title').innerText = "Update Status for " + id;
+    // Get value and trim whitespace
+    let trackID = document.getElementById('admin-track-id').value.trim();
+
+    // --- AUTO-GENERATE LOGIC ---
+    if (!isEditMode && !trackID) {
+        trackID = generateShipmentID();
+    } else if (isEditMode && !trackID) {
+        alert("Critical Error: Update requires an ID.");
+        saveBtn.innerText = "Save Shipment";
+        saveBtn.disabled = false;
+        return;
+    }
+
+    const shipmentData = {
+        id: trackID,
+        status: document.getElementById('admin-status').value,
+        location: document.getElementById('admin-location').value,
+        remarks: document.getElementById('admin-remarks').value,
+        date: document.getElementById('date').value,
+        estimatedDate: document.getElementById('admin-estimated-date').value,
+        destination: document.getElementById('destination').value,
+        departure: document.getElementById('departure').value,
+        history: [{
+            status: document.getElementById('admin-status').value,
+            location: document.getElementById('admin-location').value,
+            remarks: document.getElementById('admin-remarks').value,
+            date: document.getElementById('date').value,
+            time: document.getElementById('time').value,
+            done: true
+        }]
+    };
+
+    try {
+        const url = isEditMode ? `${API_BASE_URL}/shipments/${trackID}` : `${API_BASE_URL}/shipments`;
+        const method = isEditMode ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: getAuthHeader(),
+            body: JSON.stringify(shipmentData)
+        });
+
+        if (response.ok) {
+            alert(isEditMode ? 'Update Successful!' : `Shipment Created! ID: ${trackID}`);
+            formContainer.classList.add('hidden');
+            renderShipments();
+        } else {
+            const error = await response.json();
+            alert(`Error: ${error.message}`);
+        }
+    } catch (err) {
+        alert("Server connection failed.");
+    } finally {
+        saveBtn.innerText = "Save Shipment";
+        saveBtn.disabled = false;
+    }
+});
+
+
+window.deleteShipment = async (id) => {
+    if (confirm('Permanently remove from database?')) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/shipments/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeader()
+            });
+            if (response.ok) renderShipments();
+        } catch (err) {
+            console.error("Delete Error:", err);
+        }
+    }
 };
 
-window.deleteShipment = (id) => {
-    if (confirm('Are you sure you want to delete this shipment?')) {
-        shipments = shipments.filter(s => s.id !== id);
-        localStorage.setItem('gsil_shipments', JSON.stringify(shipments));
-        renderShipments();
+
+window.editShipment = async (id) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/shipments/${id}`, { headers: getAuthHeader() });
+        const s = await response.json();
+
+        isEditMode = true;
+        document.getElementById('admin-track-id').value = s.id;
+        document.getElementById('admin-track-id').disabled = true;
+        document.getElementById('admin-status').value = s.status;
+        document.getElementById('admin-location').value = s.location;
+        document.getElementById('admin-remarks').value = s.remarks;
+        document.getElementById('admin-estimated-date').value = s.estimatedDate || "";
+        document.getElementById('destination').value = s.destination || "";
+        document.getElementById('departure').value = s.departure || "";
+        
+        formContainer.classList.remove('hidden');
+        document.getElementById('form-title').innerText = "Updating: " + id;
+    } catch (err) {
+        console.error("Load Error:", err);
     }
 };
 
 window.logout = function() {
-    localStorage.removeItem('isLoggedIn');
-    window.location.href = 'login.html';
+    localStorage.clear();
+    window.location.href = 'index.html';
 };
-
-renderShipments();
