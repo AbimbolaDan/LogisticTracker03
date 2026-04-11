@@ -196,6 +196,16 @@ window.editShipment = async (id) => {
 };
 
 window.logout = function() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        const loadingText = loadingOverlay.querySelector('.loading-text');
+        if (loadingText) loadingText.innerText = "LOGGING OUT...";
+        loadingOverlay.classList.remove('hidden');
+    }
+
     localStorage.clear();
-    window.location.href = 'index.html';
+    
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 800);
 };

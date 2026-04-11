@@ -106,7 +106,7 @@ track_form.addEventListener('submit', async (e) => {
                 </div>
 
                 <div class="link-back" style="text-align: center; margin-top: 30px;">
-                    <a href="admin.html" class="back">Back to Home</a>
+                    <a href="https://gsil-tracker.vercel.app/Admin.html" class="back">Back to Home</a>
                 </div>
             </div>
         `;
