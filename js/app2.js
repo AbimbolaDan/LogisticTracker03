@@ -6,7 +6,6 @@ const loadingOverlay = document.getElementById('loading-overlay');
 
 const API_BASE_URL = "https://logistics-tracker-sxg2.onrender.com/api";
 
-
 input.addEventListener('input', () => {
     if (input.value.trim() === "") {
         tracking_result.classList.add('hidden');
@@ -14,7 +13,6 @@ input.addEventListener('input', () => {
         if (mapHero) mapHero.classList.add('hidden');
     }
 });
-
 
 track_form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -25,32 +23,40 @@ track_form.addEventListener('submit', async (e) => {
         return;
     }
 
+    // --- 5-SECOND TIMEOUT ---
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     loadingOverlay.classList.remove('hidden');
 
     try {
-      
-        const response = await fetch(`${API_BASE_URL}/shipments/${inputvalue}`);
+        const response = await fetch(`${API_BASE_URL}/shipments/${inputvalue}`, {
+            signal: controller.signal 
+        });
         
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
+            loadingOverlay.classList.add('hidden');
             alert('Shipment ID not found. Please verify your tracking number.');
             return;
         }
 
         const foundShipment = await response.json();
 
-        
+        // LOGIC: Estimated Date & Delay Warning
         const estDateObj = new Date(foundShipment.estimatedDate);
         const today = new Date();
         const isDelayed = today > estDateObj && foundShipment.status !== 'Delivered';
 
-       
+        // LOGIC: Status Colors
         let currentColor = 'var(--primary-blue)';
         const sLower = (foundShipment.status || "").toLowerCase();
         if (sLower.includes('out for delivery')) currentColor = 'var(--primary-red)';
         else if (sLower.includes('in transit')) currentColor = 'var(--primary-yellow)';
         else if (sLower.includes('delivered')) currentColor = 'var(--primary-green)';
 
-        
+        // LOGIC: Timeline Construction
         const timelineHTML = (foundShipment.history || []).map((item) => {
             let dotClass = 'dot-blue';
             const itemStatus = (item.status || "").toLowerCase();
@@ -70,6 +76,7 @@ track_form.addEventListener('submit', async (e) => {
             `;
         }).join('');
 
+        // INJECTING YOUR ORIGINAL DESIGN
         tracking_result.innerHTML = `
             <div class="trackingcard">
                 <h2 style="margin-bottom: 20px; font-weight: 800;"><span class='GS'>GSIL</span> Shipment Timeline</h2>
@@ -106,59 +113,87 @@ track_form.addEventListener('submit', async (e) => {
                 </div>
 
                 <div class="link-back" style="text-align: center; margin-top: 30px;">
-                    <a href="https://gsil-tracker.vercel.app/Admin.html" class="back">Back to Home</a>
+                    <a href="index.html" class="back">Back to Home</a>
                 </div>
             </div>
         `;
 
+        // REVEAL UI
         tracking_result.classList.remove('hidden');
         tracking_result.classList.add('reveal');
         mapHero.classList.remove('hidden');
+        loadingOverlay.classList.add('hidden'); // Close loader first for map visibility
 
-       
-        await initGlobalMap(foundShipment.departure, foundShipment.location);
-        loadingOverlay.classList.add('hidden');
+        // MAP INITIALIZATION
+        setTimeout(async () => {
+            await initGlobalMap(foundShipment.departure, foundShipment.location);
+        }, 400);
 
     } catch (error) {
-        console.error("Connection Error:", error);
-        alert("Failed to reach the tracking server. Please check your internet connection.");
+        loadingOverlay.classList.add('hidden');
+        if (error.name === 'AbortError') {
+            alert("Request timed out (5s limit). Please check your connection.");
+        } else {
+            console.error("Connection Error:", error);
+            alert("Failed to reach the tracking server.");
+        }
     }
 });
 
-
 async function initGlobalMap(originName, currentLocationName) {
+    const mapContainer = document.getElementById('map-hero');
     try {
         const container = L.DomUtil.get('map-hero');
-        if (container != null) { container._leaflet_id = null; }
+        if (container != null) { 
+            container._leaflet_id = null; 
+            container.innerHTML = ""; 
+        }
+
+        // Map-specific timeout for geocoding (4 seconds)
+        const mapController = new AbortController();
+        const mapTimeoutId = setTimeout(() => mapController.abort(), 4000);
 
         const [originRes, currentRes] = await Promise.all([
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(originName)}`),
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(currentLocationName)}`)
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(originName)}`, { signal: mapController.signal }),
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(currentLocationName)}`, { signal: mapController.signal })
         ]);
+
+        clearTimeout(mapTimeoutId);
 
         const originData = await originRes.json();
         const currentData = await currentRes.json();
         
-        if (originData.length === 0 || currentData.length === 0) return;
+        if (originData.length === 0 || currentData.length === 0) throw new Error("No Coords");
 
         const originCoords = [parseFloat(originData[0].lat), parseFloat(originData[0].lon)];
         const currentCoords = [parseFloat(currentData[0].lat), parseFloat(currentData[0].lon)];
 
-        const map = L.map('map-hero').setView(currentCoords, 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const map = L.map('map-hero').setView(currentCoords, 5);
+
+        setTimeout(() => { map.invalidateSize(); }, 200);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
         L.marker(originCoords).addTo(map).bindPopup(`<b>Origin:</b> ${originName}`);
-        L.marker(currentCoords).addTo(map).bindPopup(`<b>Current Location:</b> ${currentLocationName}`).openPopup();
+        L.marker(currentCoords).addTo(map).bindPopup(`<b>Current:</b> ${currentLocationName}`).openPopup();
 
         const polyline = L.polyline([originCoords, currentCoords], {
-            color: 'var(--primary-blue)',
+            color: '#3B3EA5', 
             weight: 3,
             dashArray: '5, 10'
         }).addTo(map);
 
-        map.fitBounds(polyline.getBounds(), { padding: [30, 30] });
+        map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
 
     } catch (error) {
-        console.error("Map rendering error:", error);
+        console.warn("Map block/timeout:", error);
+        mapContainer.innerHTML = `
+            <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f0f2ff; color:#3B3EA5; border-radius:12px; text-align:center; padding:20px; border:1px solid #d0d7ff;">
+                <p style="font-size:1.5rem; margin-bottom:10px;">📍</p>
+                <p style="font-weight:bold;">Map preview unavailable</p>
+                <p style="font-size:0.85rem; color:#666;">Shipment Route: ${originName} ➔ ${currentLocationName}</p>
+            </div>`;
     }
 }
