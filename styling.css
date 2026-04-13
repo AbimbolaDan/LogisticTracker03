@@ -34,9 +34,6 @@
 #map-hero {
     width: 80vw;       
     height: 600px;      
-    /* margin-bottom: 90px;
-    border-bottom: 1px solid var(--border);
-    position: relative; */
     display: block; 
 }
 .content-wrapper {

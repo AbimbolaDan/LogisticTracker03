@@ -8,7 +8,7 @@ const togglePassword = document.getElementById('toggle-password');
 const submitBtn = document.getElementById('submit-btn');
 const loadingOverlay = document.getElementById('loading-overlay');
 
-// 1. Password Visibility Toggle
+// 1. Password Visibility Toggle (Kept your original logic)
 if (togglePassword && passwordInput) {
     togglePassword.addEventListener('click', function () {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -17,7 +17,7 @@ if (togglePassword && passwordInput) {
     });
 }
 
-// 2. Form Submission with API & Loading State
+// 2. Form Submission with 5-Second Timeout
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -29,6 +29,10 @@ form.addEventListener('submit', async function(e) {
         return;
     }
 
+    // --- 5-SECOND TIMEOUT LOGIC ---
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); 
+
     // ACTIVATE LOADING SCREEN
     loadingOverlay.classList.remove('hidden');
 
@@ -38,28 +42,32 @@ form.addEventListener('submit', async function(e) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
+            signal: controller.signal // Attach the timeout signal here
         });
+
+        clearTimeout(timeoutId); // Cancel the timer if we get a response in time
 
         const data = await response.json();
 
         if (response.ok) {
-            // SUCCESS: Setup Session
             localStorage.setItem('isLoggedIn', 'true');
             if (data.token) {
                 localStorage.setItem('adminToken', data.token);
             }
-            // Redirect will naturally remove the overlay
             window.location.href = 'Admin.html';
         } else {
-            // FAILURE: Remove overlay to allow correction
             loadingOverlay.classList.add('hidden');
             alert(data.message || "Invalid credentials. Please try again.");
         }
     } catch (error) {
-        // NETWORK ERROR: Hide overlay
         loadingOverlay.classList.add('hidden');
-        console.error("Login Error:", error);
-        alert("Unable to connect to GSIL server. Check your connection.");
+        
+        if (error.name === 'AbortError') {
+            alert("Authentication timed out (5s limit). The GSIL server might be starting up—please try again in a few seconds.");
+        } else {
+            console.error("Login Error:", error);
+            alert("Unable to connect to GSIL server. Check your connection.");
+        }
     }
 });
